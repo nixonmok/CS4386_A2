@@ -1,8 +1,11 @@
+import math
+import sys
 import numpy as np
 import os 
 import copy
 
 #my direction of the algorithm: alpha-beta pruning minimax algorithm
+
 
 def load_matrix(matrix_file_name): # read and load the current state
     with open(matrix_file_name, 'r') as f:
@@ -24,39 +27,76 @@ def write_matrix(matrix, matrix_file_name_output): # wirte the new state into ne
                 if j==4:
                     f.write('\n')
 
-def next_move_wolf(matrix): # random walk for wolf
-    candidates=[]
-    for i in range(5):
-        for j in range(5):
-            if matrix[i,j]==2:
-                if i+1<5:
-                    if matrix[i+1,j]==0:
-                        candidates.append([i,j,i+1,j])
-                if i-1>=0:
-                    if matrix[i-1,j]==0:
-                        candidates.append([i,j,i-1,j])
-                if j+1<5:
-                    if matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+1])
-                if j-1>=0:
-                    if matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-1])
-                if i+2<5:
-                    if matrix[i+2,j]==1 and matrix[i+1,j]==0:
-                        candidates.append([i,j,i+2,j])
-                if i-2>=0:
-                    if matrix[i-2,j]==1 and matrix[i-1,j]==0:
-                        candidates.append([i,j,i-2,j])
-                if j+2<5:
-                    if matrix[i,j+2]==1 and matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+2])
-                if j-2>=0:
-                    if matrix[i,j-2]==1 and matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-2])
-    move_idx=np.random.randint(0, len(candidates))
-    return candidates[move_idx]
+def evaluationFunction(matrix, isWolf):
+    if isWolf:
+        print("wolf evaluation function")
+    else:
+        print("sheep evaluation function")
 
-def next_move_sheep(matrix): # random walk for sheep
+def minimax(state, depth, max1min0, score, alpha, beta, isWolf):
+    print("minimax algorithm")
+    
+#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, WHAT CAN I CHANGE? JUST THE EVALUATION FUNCTION IS DIFFERENT
+def next_move_wolf(matrix): # minimax for wolf
+    availableMove = []
+    
+    bestMove = None
+    bestScore = math.inf
+    
+    alpha = -math.inf
+    beta = math.inf
+    
+    for move in availableMove:
+        simulationState = copy.deepcopy(matrix)
+        beforeMoveX = move[0]
+        beforeMoveY = move[1]
+        afterMoveX = move[2]
+        afterMovey = move[3]
+        simulationState[beforeMoveX,beforeMoveY] = 0
+        simulationState[afterMoveX,afterMovey] = 2
+        EvaluatedScoreForThisBoard = evaluationFunction(matrix, True)
+        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta, True)
+        bestScore = max(bestScore, currentScore)
+        if currentScore > bestScore:
+            bestScore = currentScore
+            bestMove = move 
+        alpha = max(alpha, bestScore)
+    return bestMove    
+    
+    # candidates=[]
+    # for i in range(5):
+    #     for j in range(5):
+    #         if matrix[i,j]==2:
+    #             if i+1<5:
+    #                 if matrix[i+1,j]==0:
+    #                     candidates.append([i,j,i+1,j])
+    #             if i-1>=0:
+    #                 if matrix[i-1,j]==0:
+    #                     candidates.append([i,j,i-1,j])
+    #             if j+1<5:
+    #                 if matrix[i,j+1]==0:
+    #                     candidates.append([i,j,i,j+1])
+    #             if j-1>=0:
+    #                 if matrix[i,j-1]==0:
+    #                     candidates.append([i,j,i,j-1])
+    #             if i+2<5:
+    #                 if matrix[i+2,j]==1 and matrix[i+1,j]==0:
+    #                     candidates.append([i,j,i+2,j])
+    #             if i-2>=0:
+    #                 if matrix[i-2,j]==1 and matrix[i-1,j]==0:
+    #                     candidates.append([i,j,i-2,j])
+    #             if j+2<5:
+    #                 if matrix[i,j+2]==1 and matrix[i,j+1]==0:
+    #                     candidates.append([i,j,i,j+2])
+    #             if j-2>=0:
+    #                 if matrix[i,j-2]==1 and matrix[i,j-1]==0:
+    #                     candidates.append([i,j,i,j-2])
+    # move_idx=np.random.randint(0, len(candidates))
+    # return candidates[move_idx]
+    
+    
+
+def next_move_sheep(matrix): # minimax for sheep
     candidates=[]
     for i in range(5):
         for j in range(5):
@@ -76,11 +116,27 @@ def next_move_sheep(matrix): # random walk for sheep
     move_idx=np.random.randint(0, len(candidates))
     return candidates[move_idx]
 
+#!!!DISCLAIMER!!!
+################################################################
+#I DID ALL THE THING BY MYSELF
+#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE
+#PLEASE DO NOT ACCUSE ME OF PLAGARISM CUZ OF COPYING WORK BY MYSELF
+#IT IS CALL REUSE ENGINEERING(WORK SMART NOT HARD) AND NOT FULLY COPYING(JUST LIKE REFERRING TO PSEUDO CODE)
+#IF THIS CALL PLAGARISM, THEN EVERYTIME I WRITE HELLO WORLD PROGRAM I PLAGARISE ONCE CUZ I MOST LIKELY A LOT OF HELLO WORLD CODE IN THE INTERNET 
+################################################################
+#!!!DISCLAIMER!!!
+
 def AIAlgorithm(filename, movemade): # a showcase for random walk
     iter_num=filename.split('/')[-1]
     iter_num=iter_num.split('.')[0]
     iter_num=int(iter_num.split('_')[1])
     matrix=load_matrix(filename)
+    role = ""
+    if movemade is True:
+        role = "wolf"
+    else:
+        role = "sheep"
+    print(role,"'s turn, current board: \n",matrix)
     if movemade==True:
         [start_row, start_col, end_row, end_col]=next_move_wolf(matrix)
         matrix2=copy.deepcopy(matrix)

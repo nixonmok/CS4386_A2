@@ -6,7 +6,7 @@ import ai_algorithm_56819145 as ai
 import ctypes
 import jpype
 import os
-# os.environ['JAVA_HOME'] = r'C:/Program Files/Java/jdk-19'
+os.environ['JAVA_HOME'] = r'C:/Program Files/Java/jdk-19'
 
 class WES(object):
 
