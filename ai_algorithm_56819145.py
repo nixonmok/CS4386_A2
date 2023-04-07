@@ -2,6 +2,8 @@ import numpy as np
 import os 
 import copy
 
+#my direction of the algorithm: alpha-beta pruning minimax algorithm
+
 def load_matrix(matrix_file_name): # read and load the current state
     with open(matrix_file_name, 'r') as f:
         data = f.read()
