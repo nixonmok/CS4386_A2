@@ -27,14 +27,105 @@ def write_matrix(matrix, matrix_file_name_output): # wirte the new state into ne
                 if j==4:
                     f.write('\n')
 
+# COPY FROM WES_Engine.py line 97
+def checkWinning(board):
+    # 1: wolf wins, 2: sheep wins, 0: continually gaming
+    # check wolves winning
+    sheep_num = 0
+    wolf_neighbour = []
+    wolf_win = True
+    sheep_win = True
+    winner = 0
+    line_range = [0, 1, 2, 3, 4]
+    for r in range(len(board)):
+        for c in range(len(board[r])):
+            if board[r][c] == '1':
+                sheep_num += 1
+            elif board[r][c] == '2':
+                if r - 1 in line_range:
+                    wolf_neighbour.append((r-1, c))
+                if r + 1 in line_range:
+                    wolf_neighbour.append((r + 1, c))
+                if c - 1 in line_range:
+                    wolf_neighbour.append((r, c - 1))
+                if c + 1 in line_range:
+                    wolf_neighbour.append((r, c + 1))
+            else:
+                pass
+    for item in wolf_neighbour:
+        if board[item[0]][item[1]] == '0':
+            sheep_win = not sheep_win
+            break
+    if sheep_num > 2:
+        wolf_win = not wolf_win
+
+    if wolf_win:
+        winner = 1
+    if sheep_win:
+        winner = 2
+
+    return winner
+
+def getAvailableMove(matrix,isWolf):
+    print("available Move is...")
+    
 def evaluationFunction(matrix, isWolf):
     if isWolf:
         print("wolf evaluation function")
     else:
         print("sheep evaluation function")
 
-def minimax(state, depth, max1min0, score, alpha, beta, isWolf):
+def minimax(state, depth, max1min0, score, alpha, beta):
     print("minimax algorithm")
+    if depth == 0 or checkWinning(state) != 0:
+        return evaluationFunction(state)
+    if max1min0:
+        bestScore = -math.inf
+        nextMax = False
+        avaliableMove = getAvailableMove(state,True)
+        for move in avaliableMove:
+            simulationState = copy.deepcopy(state)
+            beforeMoveX = move[0]
+            beforeMoveY = move[1]
+            afterMoveX = move[2]
+            afterMovey = move[3]
+            simulationState[beforeMoveX,beforeMoveY] = 0
+            simulationState[afterMoveX,afterMovey] = 2
+            
+            evaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
+            
+            currentScore = minimax(simulationState, depth-1, nextMax, evaluatedScoreForThisBoard, alpha, beta)
+            
+            bestScore = max(bestScore, currentScore)
+            
+            alpha = max(alpha,bestScore)
+            if alpha >= beta:
+                break
+        return bestScore
+    else:
+        bestScore = -math.inf
+        nextMax = True
+        avaliableMove = getAvailableMove(state,False)
+        for move in avaliableMove:
+            simulationState = copy.deepcopy(state)
+            beforeMoveX = move[0]
+            beforeMoveY = move[1]
+            afterMoveX = move[2]
+            afterMovey = move[3]
+            simulationState[beforeMoveX,beforeMoveY] = 0
+            simulationState[afterMoveX,afterMovey] = 1
+            
+            evaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
+            
+            currentScore = minimax(simulationState, depth-1, nextMax, evaluatedScoreForThisBoard, alpha, beta)
+            
+            bestScore = max(bestScore, currentScore)
+            
+            beta = min(bestScore,currentScore)
+            if alpha >= beta:
+                break
+        return bestScore
+            
     
 #THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, WHAT CAN I CHANGE? JUST THE EVALUATION FUNCTION IS DIFFERENT
 def next_move_wolf(matrix): # minimax for wolf
@@ -54,8 +145,8 @@ def next_move_wolf(matrix): # minimax for wolf
         afterMovey = move[3]
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 2
-        EvaluatedScoreForThisBoard = evaluationFunction(matrix, True)
-        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta, True)
+        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
+        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta)
         bestScore = max(bestScore, currentScore)
         if currentScore > bestScore:
             bestScore = currentScore
@@ -97,24 +188,49 @@ def next_move_wolf(matrix): # minimax for wolf
     
 
 def next_move_sheep(matrix): # minimax for sheep
-    candidates=[]
-    for i in range(5):
-        for j in range(5):
-            if matrix[i,j]==1:
-                if i+1<5:
-                    if matrix[i+1,j]==0:
-                        candidates.append([i,j,i+1,j])
-                if i-1>=0:
-                    if matrix[i-1,j]==0:
-                        candidates.append([i,j,i-1,j])
-                if j+1<5:
-                    if matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+1])
-                if j-1>=0:
-                    if matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-1])
-    move_idx=np.random.randint(0, len(candidates))
-    return candidates[move_idx]
+    availableMove = []
+    
+    bestMove = None
+    bestScore = math.inf
+    
+    alpha = -math.inf
+    beta = math.inf
+    
+    for move in availableMove:
+        simulationState = copy.deepcopy(matrix)
+        beforeMoveX = move[0]
+        beforeMoveY = move[1]
+        afterMoveX = move[2]
+        afterMovey = move[3]
+        simulationState[beforeMoveX,beforeMoveY] = 0
+        simulationState[afterMoveX,afterMovey] = 1
+        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
+        currentScore = minimax(simulationState, 7, True, EvaluatedScoreForThisBoard, alpha, beta)
+        bestScore = max(bestScore, currentScore)
+        if currentScore > bestScore:
+            bestScore = currentScore
+            bestMove = move 
+        alpha = max(alpha, bestScore)
+    return bestMove  
+    
+    # candidates=[]
+    # for i in range(5):
+    #     for j in range(5):
+    #         if matrix[i,j]==1:
+    #             if i+1<5:
+    #                 if matrix[i+1,j]==0:
+    #                     candidates.append([i,j,i+1,j])
+    #             if i-1>=0:
+    #                 if matrix[i-1,j]==0:
+    #                     candidates.append([i,j,i-1,j])
+    #             if j+1<5:
+    #                 if matrix[i,j+1]==0:
+    #                     candidates.append([i,j,i,j+1])
+    #             if j-1>=0:
+    #                 if matrix[i,j-1]==0:
+    #                     candidates.append([i,j,i,j-1])
+    # move_idx=np.random.randint(0, len(candidates))
+    # return candidates[move_idx]
 
 #!!!DISCLAIMER!!!
 ################################################################
