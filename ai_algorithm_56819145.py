@@ -66,65 +66,98 @@ def checkWinning(board):
 
     return winner
 
-def getAvailableMove(matrix,isWolf):
+def getAvailableMove(matrix,turn):
     print("available Move is...")
     
-def evaluationFunction(matrix, isWolf):
-    if isWolf:
-        print("wolf evaluation function")
+    #COPY FROM ORIGINAL next_move_wolf PROVIDED BY YOU
+    candidates=[]
+    role = 0
+    if turn == 'Wolf':
+        role = 2
     else:
-        print("sheep evaluation function")
+        role = 1
+    
+    for i in range(5):
+        for j in range(5):
+            if matrix[i,j]==role:
+                if i+1<5:
+                    if matrix[i+1,j]==0:
+                        candidates.append([i,j,i+1,j])
+                if i-1>=0:
+                    if matrix[i-1,j]==0:
+                        candidates.append([i,j,i-1,j])
+                if j+1<5:
+                    if matrix[i,j+1]==0:
+                        candidates.append([i,j,i,j+1])
+                if j-1>=0:
+                    if matrix[i,j-1]==0:
+                        candidates.append([i,j,i,j-1])
+                if i+2<5:
+                    if matrix[i+2,j]==1 and matrix[i+1,j]==0:
+                        candidates.append([i,j,i+2,j])
+                if i-2>=0:
+                    if matrix[i-2,j]==1 and matrix[i-1,j]==0:
+                        candidates.append([i,j,i-2,j])
+                if j+2<5:
+                    if matrix[i,j+2]==1 and matrix[i,j+1]==0:
+                        candidates.append([i,j,i,j+2])
+                if j-2>=0:
+                    if matrix[i,j-2]==1 and matrix[i,j-1]==0:
+                        candidates.append([i,j,i,j-2])
+    
+    return candidates
 
-def minimax(state, depth, max1min0, score, alpha, beta):
+# core of minimax algorithm    
+def evaluationFunction(matrix, turn, yourRole):
+    role = 0
+    if turn == 'Wolf':
+        role = 2
+    else:
+        role = 1
+    
+
+def minimax(state, depth, score, alpha, beta, yourRole, turn):
     print("minimax algorithm")
     if depth == 0 or checkWinning(state) != 0:
-        return evaluationFunction(state)
-    if max1min0:
-        bestScore = -math.inf
-        nextMax = False
-        avaliableMove = getAvailableMove(state,True)
-        for move in avaliableMove:
-            simulationState = copy.deepcopy(state)
-            beforeMoveX = move[0]
-            beforeMoveY = move[1]
-            afterMoveX = move[2]
-            afterMovey = move[3]
-            simulationState[beforeMoveX,beforeMoveY] = 0
-            simulationState[afterMoveX,afterMovey] = 2
-            
-            evaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-            
-            currentScore = minimax(simulationState, depth-1, nextMax, evaluatedScoreForThisBoard, alpha, beta)
-            
-            bestScore = max(bestScore, currentScore)
-            
+        return evaluationFunction(state, turn, yourRole)
+    
+    role = 0
+    if turn == 'Wolf':
+        role = 2
+    else:
+        role = 1
+        
+    bestScore = -math.inf
+    avaliableMove = getAvailableMove(state, turn)
+    for move in avaliableMove:
+        simulationState = copy.deepcopy(state)
+        beforeMoveX = move[0]
+        beforeMoveY = move[1]
+        afterMoveX = move[2]
+        afterMovey = move[3]
+        simulationState[beforeMoveX,beforeMoveY] = 0
+        simulationState[afterMoveX,afterMovey] = role
+        
+        evaluatedScoreForThisBoard = evaluationFunction(simulationState, turn, yourRole)
+        nextTurn = 'Who is next turn'
+        if role == 2:
+            nextTurn = 'Sheep'
+        else:
+            nextTurn = 'Wolf'
+        currentScore = minimax(simulationState, depth-1, evaluatedScoreForThisBoard, alpha, beta, yourRole, nextTurn)
+        
+        bestScore = max(bestScore, currentScore)
+        
+        if yourRole == turn:           
             alpha = max(alpha,bestScore)
             if alpha >= beta:
                 break
-        return bestScore
-    else:
-        bestScore = -math.inf
-        nextMax = True
-        avaliableMove = getAvailableMove(state,False)
-        for move in avaliableMove:
-            simulationState = copy.deepcopy(state)
-            beforeMoveX = move[0]
-            beforeMoveY = move[1]
-            afterMoveX = move[2]
-            afterMovey = move[3]
-            simulationState[beforeMoveX,beforeMoveY] = 0
-            simulationState[afterMoveX,afterMovey] = 1
-            
-            evaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-            
-            currentScore = minimax(simulationState, depth-1, nextMax, evaluatedScoreForThisBoard, alpha, beta)
-            
-            bestScore = max(bestScore, currentScore)
-            
+        else:
             beta = min(bestScore,currentScore)
             if alpha >= beta:
                 break
-        return bestScore
+    return bestScore
+
             
     
 #THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, WHAT CAN I CHANGE? JUST THE EVALUATION FUNCTION IS DIFFERENT
@@ -146,7 +179,7 @@ def next_move_wolf(matrix): # minimax for wolf
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 2
         EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta)
+        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
         bestScore = max(bestScore, currentScore)
         if currentScore > bestScore:
             bestScore = currentScore
@@ -205,7 +238,7 @@ def next_move_sheep(matrix): # minimax for sheep
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 1
         EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-        currentScore = minimax(simulationState, 7, True, EvaluatedScoreForThisBoard, alpha, beta)
+        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
         bestScore = max(bestScore, currentScore)
         if currentScore > bestScore:
             bestScore = currentScore
