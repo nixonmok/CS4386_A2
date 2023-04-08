@@ -125,31 +125,77 @@ def evaluationFunction(matrix, turn, yourRole):
                 sheepPos.append(matrix[i,j])   
                 
                  
-    if role == 2:
-        # wolf evaluate idea: version 1.0
+        # evaluate idea: version 1.0
         # have a counter check how many sheep is near wolf
-        # if counter == 4 -> score = -40, 3 -> score = -30...
+        # if countSheepNearby == 4 -> score = -40, 3 -> score = -30...
         # if wolf can eat a sheep -> score + 10 (premise that sheep 'can' eat that sheep, not blocked by the sheep near)
         # if sheep count == 3 and wolf can eat sheep -> score = +80
         # for horizontal or vertical:
-        # 3 block from wolf -> -5 score
-        # 4 block from wolf -> +5 score
+        # 3 block from wolf -> +10 if that sheep has no ally nearby, -5 for 1 sheep nearby
+        # 4 block from wolf -> no need to care
         # for diagonal:
         # 1 block from wolf -> -5 score
-        # 2 block from wolf -> +5 score
+        # 2 block from wolf(rectangle area) -> +5 score
         
         #next version idea -> add weight -> when more sheep -> less weight
         
-        print("Wolf evaluation")
+    print("evaluation")
+    NumberOfSheep = len(sheepPos)
+    score = 0
+    countSheepNearby = 0
+    countCanEat = 0 #can eat >= 2 = + score
+    countThreeBlockAway = 0
+    countFourBlockAway = 0
+    for sheep in sheepPos:
+        for wolf in wolfPos:            
+            if sheep[0] == wolf[0]:
+                if sheep[1]-wolf[1] == -1 or sheep[1]-wolf[1] == 1:
+                    countSheepNearby += 1
+                
+                elif sheep[1]-wolf[1] == -2 or sheep[1]-wolf[1] == 2:
+                    if wolf[1] == 0:
+                        if matrix[wolf[0]][1] == 0:
+                            countCanEat += 1
+                    if wolf[1] == 4:
+                        if matrix[wolf[0]][3] == 0:
+                            countCanEat += 1
+                    else:
+                        if matrix[wolf[0]][(sheep[1]+wolf[1])//2] == 0:
+                            countCanEat += 1
+                elif sheep[1]-wolf[1] == -3 or sheep[1]-wolf[1] == 3: #elif -> means sheep[1]-wolf[1]==-2or2 will not happen
+                    if sheep[1]>wolf[1]: #sheep is left of wolf
+                        ifSheepMove = sheep[1] - 1
+                        if sheep[0] - 1 < 0: #sheep[0][?]
+                            print("sheep[0][?]")
+                        elif sheep[0] + 1 > 4: #sheep[4][?]
+                            print("sheep[4][?]")
+                        else:
+                            if matrix[sheep[0]+1][ifSheepMove] == 1:
+                                countThreeBlockAway += 1
+                            if matrix[sheep[0]-1][ifSheepMove] == 1:
+                                countThreeBlockAway += 1
+                            if matrix[sheep[0]][ifSheepMove-1] == 1:
+                                countThreeBlockAway += 1
+                    else:
+                        ifSheepMove = sheep[1] + 1
+                        if sheep[0] - 1 < 0: #sheep[0][?]
+                            print("sheep[0][?]")
+                        elif sheep[0] + 1 > 4: #sheep[4][?]
+                            print("sheep[4][?]")
+                        else:
+                            if matrix[sheep[0]+1][ifSheepMove] == 1:
+                                countThreeBlockAway += 1
+                            if matrix[sheep[0]-1][ifSheepMove] == 1:
+                                countThreeBlockAway += 1
+                            if matrix[sheep[0]][ifSheepMove+1] == 1:
+                                countThreeBlockAway += 1
+                    print("3 blocks away")
+                print("vertical")
+            elif sheep[1] == wolf[1]:
+                print("horizontal")
+            else:
+                print("check diagonal")
 
-
-                    
-    else:
-        print("Sheep evaluation")
-        for i in range(5):
-            for j in range(5):
-                if matrix[i,j]==role:
-                    print()
     
     
     
