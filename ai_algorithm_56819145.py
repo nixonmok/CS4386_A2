@@ -107,13 +107,49 @@ def getAvailableMove(matrix,turn):
     
     return candidates
 
-# core of minimax algorithm, if yourRole != turn -> score should minus 
+# core of minimax algorithm, if yourRole != turn -> score should negative 
 def evaluationFunction(matrix, turn, yourRole):
     role = 0
     if turn == 'Wolf':
         role = 2
     else:
         role = 1
+        
+    wolfPos = []
+    sheepPos = []
+    for i in range(5):
+        for j in range(5):
+            if matrix[i,j]==2:
+                wolfPos.append(matrix[i,j])
+            if matrix[i,j]==1:
+                sheepPos.append(matrix[i,j])   
+                
+                 
+    if role == 2:
+        # wolf evaluate idea: version 1.0
+        # have a counter check how many sheep is near wolf
+        # if counter == 4 -> score = -40, 3 -> score = -30...
+        # if wolf can eat a sheep -> score + 10 (premise that sheep 'can' eat that sheep, not blocked by the sheep near)
+        # if sheep count == 3 and wolf can eat sheep -> score = +80
+        # for horizontal or vertical:
+        # 3 block from wolf -> -5 score
+        # 4 block from wolf -> +5 score
+        # for diagonal:
+        # 1 block from wolf -> -5 score
+        # 2 block from wolf -> +5 score
+        
+        #next version idea -> add weight -> when more sheep -> less weight
+        
+        print("Wolf evaluation")
+
+
+                    
+    else:
+        print("Sheep evaluation")
+        for i in range(5):
+            for j in range(5):
+                if matrix[i,j]==role:
+                    print()
     
     
     
@@ -140,13 +176,13 @@ def minimax(state, depth, score, alpha, beta, yourRole, turn):
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = role
         
-        evaluatedScoreForThisBoard = evaluationFunction(simulationState, turn, yourRole)
+        evaluatedScoreUntilThisBoard = score + evaluationFunction(simulationState, turn, yourRole)
         nextTurn = 'Who is next turn'
         if role == 2:
             nextTurn = 'Sheep'
         else:
             nextTurn = 'Wolf'
-        currentScore = minimax(simulationState, depth-1, evaluatedScoreForThisBoard, alpha, beta, yourRole, nextTurn)
+        currentScore = minimax(simulationState, depth-1, evaluatedScoreUntilThisBoard, alpha, beta, yourRole, nextTurn)
         
         
         if yourRole == turn:
