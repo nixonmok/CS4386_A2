@@ -6,7 +6,7 @@ import ai_algorithm_56819145 as ai
 import ctypes
 import jpype
 import os
-os.environ['JAVA_HOME'] = r'C:/Program Files/Java/jdk-19'
+#os.environ['JAVA_HOME'] = r'C:/Program Files/Java/jdk-19'
 
 class WES(object):
 
@@ -126,7 +126,8 @@ class WES(object):
         elif self.LANGUAGE == "C++":
             # Compile a .cpp to .so: g++ --shared -o aiAlgorithm.so aiAlgorithm.cpp
             # Load the shared library
-            lib = ctypes.CDLL('./c++/ai_algorithm.so') # If Python >= 3.8, please use this coomand: lib = ctypes.CDLL('./c++/aiAlgorithm.so', winmode=0)
+            #lib = ctypes.CDLL('./c++/aiAlgorithm.so') # If Python >= 3.8, please use this coomand: lib = ctypes.CDLL('./c++/aiAlgorithm.so', winmode=0)
+            lib = ctypes.CDLL(r'C:\Users\weicwang2\OneDrive - City University of Hong Kong - Student\Desktop\GAME\GAME\c++\aiAlgorithm.so', winmode=0)
             lib.AIAlgorithm_c.restype = ctypes.POINTER(ctypes.c_long) #ctypes.POINTER(ctypes.c_int)
             lib.AIAlgorithm_c.argtypes = [ctypes.c_char_p, ctypes.c_bool]
             result = lib.AIAlgorithm_c(ctypes.c_char_p(record_file.encode('utf-8')), moveMade)
@@ -140,17 +141,17 @@ class WES(object):
             # 1. javac AIAlgorithm.java
             # 2. jar cf AIAlgorithm.jar AIAlgorithm.class
             # Create a Java object that corresponds to the AI_Algorithm class
-            jarpath = r'./java/ai_algorithm.jar'  # the path to jar file
+            jarpath = r'./java/AIAlgorithm.jar'  # the path to jar file
 
             JVMPath = jpype.getDefaultJVMPath()
             Djava = "-Djava.class.path=" + jarpath
             if not jpype.isJVMStarted():
                 jpype.startJVM(JVMPath, "-ea", Djava)
-            JDClass = jpype.JClass("ai_algorithm")
+            JDClass = jpype.JClass("AIAlgorithm")
             jd = JDClass()
 
             # Call the ai_algorithm function
-            result = jd.AIAlgorithm(record_file, moveMade)
+            result = jd.ai_algorithm(record_file, moveMade)
 
             # Convert the result to a Python list
             result = list(result)
@@ -218,7 +219,7 @@ class WES(object):
         p.display.set_caption('Wolves Eat Sheep')
         count = 1
         self.drawGameState(screen, gs)
-        count_mode = False
+        count_mode = True
         while running:
             for e in p.event.get():
                 if e.type == p.QUIT:
@@ -230,11 +231,17 @@ class WES(object):
                         if count_mode == moveMade:
                             count = self.board_record(gs, count)
                             count_mode = not count_mode
+                        status = self.check_winner(gs, clock, screen, my_font, p)
+                        if status:
+                            return True
                     elif self.PLAY_ROLE[0] == 0:
                         gs, moveMade = self.ai_move(gs, count, moveMade)
                         if count_mode == moveMade:
                             count = self.board_record(gs, count)
                             count_mode = not count_mode
+                        status = self.check_winner(gs, clock, screen, my_font, p)
+                        if status:
+                            return True
                     else:
                         raise ValueError('The setting of playing is wrong')
 
@@ -246,15 +253,20 @@ class WES(object):
                         if count_mode == moveMade:
                             count = self.board_record(gs, count)
                             count_mode = not count_mode
+                        status = self.check_winner(gs, clock, screen, my_font, p)
+                        if status:
+                            return True
                     elif self.PLAY_ROLE[1] == 0:
                         gs, moveMade = self.ai_move(gs, count, moveMade)
                         if count_mode == moveMade:
                             count = self.board_record(gs, count)
                             count_mode = not count_mode
-
+                        status = self.check_winner(gs, clock, screen, my_font, p)
+                        if status:
+                            return True
                     else:
                         raise ValueError('The setting of playing is wrong')
-
+            '''
             self.drawGameState(screen, gs)
             clock.tick(self.MAX_FPS)
             winner = gs.checkWinning()
@@ -277,4 +289,34 @@ class WES(object):
                     time.sleep(5)
                     p.quit()
                     return True
+            '''
             p.display.flip()
+
+    '''
+    Winner Judgement
+    '''
+    def check_winner(self, gs, clock, screen, my_font, p):
+        self.drawGameState(screen, gs)
+        clock.tick(self.MAX_FPS)
+        winner = gs.checkWinning()
+        if winner != 0:
+            if winner == 1:
+                surface_1 = my_font.render('Wolves Win!', False, (220, 0, 0))
+                surface_2 = my_font.render('Input mode for A New Game', False, (220, 0, 0))
+                screen.blit(surface_1, (1.7 * self.SQ_SIZE, 2 * self.SQ_SIZE))
+                screen.blit(surface_2, (0.2 * self.SQ_SIZE, 2.4 * self.SQ_SIZE))
+                p.display.flip()
+                time.sleep(5)
+                p.quit()
+                return True
+            if winner == 2:
+                surface_1 = my_font.render('Sheep Win!', False, (220, 0, 0))
+                surface_2 = my_font.render('Input mode for A New Game', False, (220, 0, 0))
+                screen.blit(surface_1, (1.7 * self.SQ_SIZE, 2 * self.SQ_SIZE))
+                screen.blit(surface_2, (0.2 * self.SQ_SIZE, 2.4 * self.SQ_SIZE))
+                p.display.flip()
+                time.sleep(5)
+                p.quit()
+                return True
+        else:
+            return False
