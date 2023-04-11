@@ -77,54 +77,65 @@ def getAvailableMove(matrix,turn):
     else:
         role = 1
     
-    for i in range(5):
-        for j in range(5):
-            if matrix[i,j]==role:
-                if i+1<5:
-                    if matrix[i+1,j]==0:
-                        candidates.append([i,j,i+1,j])
-                if i-1>=0:
-                    if matrix[i-1,j]==0:
-                        candidates.append([i,j,i-1,j])
-                if j+1<5:
-                    if matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+1])
-                if j-1>=0:
-                    if matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-1])
-                if i+2<5:
-                    if matrix[i+2,j]==1 and matrix[i+1,j]==0:
-                        candidates.append([i,j,i+2,j])
-                if i-2>=0:
-                    if matrix[i-2,j]==1 and matrix[i-1,j]==0:
-                        candidates.append([i,j,i-2,j])
-                if j+2<5:
-                    if matrix[i,j+2]==1 and matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+2])
-                if j-2>=0:
-                    if matrix[i,j-2]==1 and matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-2])
-    
+    if role == 2:
+        for i in range(5):
+            for j in range(5):
+                if matrix[i,j]==2:
+                    if i+1<5:
+                        if matrix[i+1,j]==0:
+                            candidates.append([i,j,i+1,j])
+                    if i-1>=0:
+                        if matrix[i-1,j]==0:
+                            candidates.append([i,j,i-1,j])
+                    if j+1<5:
+                        if matrix[i,j+1]==0:
+                            candidates.append([i,j,i,j+1])
+                    if j-1>=0:
+                        if matrix[i,j-1]==0:
+                            candidates.append([i,j,i,j-1])
+                    if i+2<5:
+                        if matrix[i+2,j]==1 and matrix[i+1,j]==0:
+                            candidates.append([i,j,i+2,j])
+                    if i-2>=0:
+                        if matrix[i-2,j]==1 and matrix[i-1,j]==0:
+                            candidates.append([i,j,i-2,j])
+                    if j+2<5:
+                        if matrix[i,j+2]==1 and matrix[i,j+1]==0:
+                            candidates.append([i,j,i,j+2])
+                    if j-2>=0:
+                        if matrix[i,j-2]==1 and matrix[i,j-1]==0:
+                            candidates.append([i,j,i,j-2])
+    else:
+        for i in range(5):
+            for j in range(5):
+                if matrix[i,j]==1:
+                    if i+1<5:
+                        if matrix[i+1,j]==0:
+                            candidates.append([i,j,i+1,j])
+                    if i-1>=0:
+                        if matrix[i-1,j]==0:
+                            candidates.append([i,j,i-1,j])
+                    if j+1<5:
+                        if matrix[i,j+1]==0:
+                            candidates.append([i,j,i,j+1])
+                    if j-1>=0:
+                        if matrix[i,j-1]==0:
+                            candidates.append([i,j,i,j-1])
     return candidates
 
 # core of minimax algorithm, if yourRole != turn -> score should negative 
 def evaluationFunction(matrix, turn, yourRole):
-    role = 0
-    if turn == 'Wolf':
-        role = 2
-    else:
-        role = 1
         
     wolfPos = []
     sheepPos = []
     for i in range(5):
         for j in range(5):
-            if matrix[i,j]==2:
-                wolfPos.append(matrix[i,j])
-            if matrix[i,j]==1:
-                sheepPos.append(matrix[i,j])   
+            if matrix[i][j]==2:
+                wolfPos.append([i,j])
+            if matrix[i][j]==1:
+                sheepPos.append([i,j])   
                 
-                 
+    print("their positions",wolfPos,sheepPos)             
         # evaluate idea: version 1.0
         # have a counter check how many sheep is near wolf
         # if countSheepNearby == 4 -> score = -40, 3 -> score = -30...
@@ -142,12 +153,16 @@ def evaluationFunction(matrix, turn, yourRole):
     print("evaluation")
     NumberOfSheep = len(sheepPos)
     score = 0
-    countSheepNearby = 0
-    countCanEat = 0 #can eat >= 2 = + score
-    countThreeBlockAway = 0
-    countFourBlockAway = 0
-    for sheep in sheepPos:
-        for wolf in wolfPos:            
+    
+    for wolf in wolfPos:
+        countSheepNearby = 0
+        countCanEat = 0 #can eat >= 2 = + score
+        countThreeBlockAway = 0
+        futureRisk = 0
+        atMostThreeRisk = 0
+        atMostFourRisk = 0
+        # countFourBlockAway = 0
+        for sheep in sheepPos:            
             if sheep[0] == wolf[0]:
                 if sheep[1]-wolf[1] == -1 or sheep[1]-wolf[1] == 1:
                     countSheepNearby += 1
@@ -163,45 +178,180 @@ def evaluationFunction(matrix, turn, yourRole):
                         if matrix[wolf[0]][(sheep[1]+wolf[1])//2] == 0:
                             countCanEat += 1
                 elif sheep[1]-wolf[1] == -3 or sheep[1]-wolf[1] == 3: #elif -> means sheep[1]-wolf[1]==-2or2 will not happen
-                    if sheep[1]>wolf[1]: #sheep is left of wolf
+                    countThreeBlockAway += 1
+                    #print("3 blocks away")
+                    ifSheepMove = None
+                    if sheep[1] > wolf[1]:
                         ifSheepMove = sheep[1] - 1
-                        if sheep[0] - 1 < 0: #sheep[0][?]
-                            print("sheep[0][?]")
-                        elif sheep[0] + 1 > 4: #sheep[4][?]
-                            print("sheep[4][?]")
-                        else:
-                            if matrix[sheep[0]+1][ifSheepMove] == 1:
-                                countThreeBlockAway += 1
-                            if matrix[sheep[0]-1][ifSheepMove] == 1:
-                                countThreeBlockAway += 1
-                            if matrix[sheep[0]][ifSheepMove-1] == 1:
-                                countThreeBlockAway += 1
                     else:
                         ifSheepMove = sheep[1] + 1
-                        if sheep[0] - 1 < 0: #sheep[0][?]
-                            print("sheep[0][?]")
-                        elif sheep[0] + 1 > 4: #sheep[4][?]
-                            print("sheep[4][?]")
-                        else:
-                            if matrix[sheep[0]+1][ifSheepMove] == 1:
-                                countThreeBlockAway += 1
-                            if matrix[sheep[0]-1][ifSheepMove] == 1:
-                                countThreeBlockAway += 1
-                            if matrix[sheep[0]][ifSheepMove+1] == 1:
-                                countThreeBlockAway += 1
-                    print("3 blocks away")
-                print("vertical")
+                    if sheep[0] - 1 < 0: #sheep[0][?]
+                        #print("sheep[0][?]")
+                        if matrix[sheep[0]+1][ifSheepMove] == 1:
+                            futureRisk += 1
+                    elif sheep[0] + 1 > 4: #sheep[4][?]
+                        #print("sheep[4][?]")
+                        if matrix[sheep[0]-1][ifSheepMove] == 1:
+                            futureRisk += 1
+                    else:
+                        if matrix[sheep[0]+1][ifSheepMove] == 1:
+                            futureRisk += 1
+                        if matrix[sheep[0]-1][ifSheepMove] == 1:
+                            futureRisk += 1
+                        if matrix[sheep[0]][ifSheepMove-1] == 1:
+                            futureRisk += 1
+                    #print("3 blocks away")
+                #print("vertical")
             elif sheep[1] == wolf[1]:
-                print("horizontal")
+                #print("horizontal")
+                if sheep[0]-wolf[0] == -1 or sheep[0]-wolf[0] == 1:
+                    countSheepNearby += 1                
+                elif sheep[0]-wolf[0] == -2 or sheep[0]-wolf[0] == 2:
+                    if wolf[0] == 0:
+                        if matrix[1][wolf[1]] == 0:
+                            countCanEat += 1
+                    if wolf[0] == 4:
+                        if matrix[3][wolf[1]] == 0:
+                            countCanEat += 1
+                    else:
+                        if matrix[(sheep[0]+wolf[0])//2][wolf[1]] == 0:
+                            countCanEat += 1
+                elif sheep[0]-wolf[0] == -3 or sheep[0]-wolf[0] == 3: #elif -> means sheep[1]-wolf[1]==-2or2 will not happen
+                    #print("3 blocks away")
+                    ifSheepMove = None
+                    if sheep[0] > wolf[0]:
+                        ifSheepMove = sheep[0] - 1
+                    else:
+                        ifSheepMove = sheep[0] + 1
+                    if sheep[1] - 1 < 0: #sheep[0][?]
+                        #print("sheep[0][?]")
+                        if matrix[ifSheepMove][sheep[1]+1] == 1:
+                            futureRisk += 1
+                    elif sheep[1] + 1 > 4: #sheep[4][?]
+#                       print("sheep[4][?]")
+                        if matrix[ifSheepMove][sheep[1]-1] == 1:
+                            futureRisk += 1
+                    else:
+                        if matrix[ifSheepMove][sheep[1]+1] == 1:
+                            futureRisk += 1
+                        if matrix[ifSheepMove][sheep[1]-1] == 1:
+                            futureRisk += 1
+                        if matrix[ifSheepMove-1][sheep[1]] == 1:
+                            futureRisk += 1                    
+#                    print("3 blocks away")
             else:
-                print("check diagonal")
+                if wolf[0] == 0 and wolf[1] == 0:
+                    if sheep[0] == 1 and sheep[1] == 1:
+                        if matrix[0][1] == 1 and matrix[1][0] == 1:
+                            score -= 70 #no escape
+                        elif matrix[0][1] == 1 or matrix[1][0] == 1:
+                            score -= 50 #no escape
+                        else:
+                            score -= 20 #bad idea
+                    print("left up")
+                elif wolf[0] == 4 and wolf[1] == 0:
+                    if sheep[0] == 3 and sheep[1] == 1:
+                        if matrix[3][0] == 1 and matrix[4][1] == 1:
+                            score -= 70 #no escape
+                        elif matrix[3][0] == 1 or matrix[4][1] == 1:
+                            score -= 50 #no escape
+                        else:
+                            score -= 20 #bad idea
+                    print("left down")
+                elif wolf[0] == 0 and wolf[1] == 4:
+                    if sheep[0] == 1 and sheep[1] == 3:
+                        if matrix[0][3] == 1 and matrix[1][4] == 1:
+                            score -= 70 #no escape
+                        elif matrix[0][3] == 1 or matrix[1][4] == 1:
+                            score -= 50 #no escape
+                        else:
+                            score -= 20 #bad idea
+                    print("right up")
+                elif wolf[0] == 4 and wolf[1] == 4:
+                    if sheep[0] == 3 and sheep[1] == 3:
+                        if matrix[3][4] == 1 and matrix[4][3] == 1:
+                            score -= 70
+                        elif matrix[3][4] == 1 or matrix[4][3] == 1:
+                            score -= 50 #no escape
+                        else:
+                            score -= 20 #bad idea
+                    print("right down")
+                elif wolf[0] == 0:
+                    if sheep[0] == 1 and (sheep[1] == wolf[1] - 1 or sheep[1] == wolf[1] + 1):
+                        if matrix[wolf[0]][wolf[1]+1] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]][wolf[1]-1] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]+1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                    print("up")
+                elif wolf[0] == 4:
+                    if sheep[0] == 3 and (sheep[1] == wolf[1] - 1 or sheep[1] == wolf[1] + 1):
+                        if matrix[wolf[0]][wolf[1]+1] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]][wolf[1]-1] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]-1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                    print("down")
+                elif wolf[1] == 0:
+                    if sheep[1] == 1 and (sheep[0] == wolf[0] - 1 or sheep[0] == wolf[0] + 1):
+                        if matrix[wolf[0]-1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]+1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]][wolf[1]+1] == 1:
+                            atMostThreeRisk += 1
+                    print("left")
+                elif wolf[1] == 4:
+                    if sheep[1] == 3 and (sheep[0] == wolf[0] - 1 or sheep[0] == wolf[0] + 1):
+                        if matrix[wolf[0]-1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]+1][wolf[1]] == 1:
+                            atMostThreeRisk += 1
+                        if matrix[wolf[0]][wolf[1]-1] == 1:
+                            atMostThreeRisk += 1
+                    print("right")
+                else:
+                    if (sheep[0] == wolf[0] - 1 or sheep[0] == wolf[0] + 1) and (sheep[1] == wolf[1] - 1 or sheep[1] == wolf[1] + 1):
+                        if matrix[wolf[0]-1][wolf[1]] == 1:
+                            atMostFourRisk += 1
+                        if matrix[wolf[0]+1][wolf[1]] == 1:
+                            atMostFourRisk += 1
+                        if matrix[wolf[0]][wolf[1]+1] == 1:
+                            atMostFourRisk += 1
+                        if matrix[wolf[0]][wolf[1]-1] == 1:
+                            atMostFourRisk += 1 
+                    print("center")
+                #print("check diagonal")
+    
+        score -= countSheepNearby * 20
+        if countCanEat > 1:
+            score += countCanEat * 15 * (10/NumberOfSheep)
+        if countThreeBlockAway > 0:
+            score += 15 - futureRisk * 7.5
+        if atMostThreeRisk == 3:
+            score -= 70
+        else:
+            score -= atMostThreeRisk * 10
+        if atMostFourRisk == 4:
+            score -= 70
+        else:
+            score -= atMostThreeRisk * 7.5
+    if turn == 'Sheep':
+        score *= -1
+    if yourRole != turn:
+        score *= -1
+    print("the score of",turn,"is: ",score)
+    return score
+    
 
     
     
     
 
 def minimax(state, depth, score, alpha, beta, yourRole, turn):
-    print("minimax algorithm")
+    #print("minimax algorithm")
     if depth == 0 or checkWinning(state) != 0:
         return evaluationFunction(state, turn, yourRole)
     
@@ -247,10 +397,11 @@ def minimax(state, depth, score, alpha, beta, yourRole, turn):
     
 #THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, WHAT CAN I CHANGE? JUST THE EVALUATION FUNCTION IS DIFFERENT
 def next_move_wolf(matrix): # minimax for wolf
-    availableMove = []
-    
+    availableMove = getAvailableMove(matrix, 'Wolf')
+    print("available move",availableMove)
+
     bestMove = None
-    bestScore = math.inf
+    bestScore = -math.inf
     
     alpha = -math.inf
     beta = math.inf
@@ -263,22 +414,22 @@ def next_move_wolf(matrix): # minimax for wolf
         afterMovey = move[3]
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 2
-        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
-        bestScore = max(bestScore, currentScore)
+        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Sheep', 'Wolf')
+        currentScore = minimax(simulationState, 50, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
         if currentScore > bestScore:
             bestScore = currentScore
             bestMove = move 
         alpha = max(alpha, bestScore)
+    print("bestMove:",bestMove)
     return bestMove    
     
     
 
 def next_move_sheep(matrix): # minimax for sheep
-    availableMove = []
-    
+    availableMove = getAvailableMove(matrix, 'Sheep')
+    print("available move",availableMove)
     bestMove = None
-    bestScore = math.inf
+    bestScore = -math.inf
     
     alpha = -math.inf
     beta = math.inf
@@ -291,13 +442,13 @@ def next_move_sheep(matrix): # minimax for sheep
         afterMovey = move[3]
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 1
-        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, True)
-        currentScore = minimax(simulationState, 7, False, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
-        bestScore = max(bestScore, currentScore)
+        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Wolf', 'Sheep')
+        currentScore = minimax(simulationState, 500, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
         if currentScore > bestScore:
             bestScore = currentScore
             bestMove = move 
         alpha = max(alpha, bestScore)
+    print("bestMove:",bestMove)
     return bestMove  
     
 
