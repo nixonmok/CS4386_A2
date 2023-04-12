@@ -138,11 +138,11 @@ def evaluationFunction(matrix, turn, yourRole):
     #print("their positions",wolfPos,sheepPos)             
         # evaluate idea: version 1.0
         # have a counter check how many sheep is near wolf
-        # if countSheepNearby == 4 -> score = -40, 3 -> score = -30...
-        # if wolf can eat a sheep -> score + 10 (premise that sheep 'can' eat that sheep, not blocked by the sheep near)
-        # if sheep count == 3 and wolf can eat sheep -> score = +80
+        # if countSheepNearby == 4 -> -score
+        # if wolf can eat a sheep -> +score (premise that sheep 'can' eat that sheep, not blocked by the sheep near)
+        # if sheep count == 3 and wolf can eat sheep -> score = +80 -> no neccessary the best(so not inf) cuz maybe the alternative decision while chossing the decision is bad
         # for horizontal or vertical:
-        # 3 block from wolf -> +10 if that sheep has no ally nearby, -5 for 1 sheep nearby
+        # 3 block from wolf -> +score if that sheep has no ally nearby, -score for 1 sheep nearby
         # 4 block from wolf -> no need to care
         # for diagonal:
         # 1 block from wolf -> -5 score
@@ -161,7 +161,6 @@ def evaluationFunction(matrix, turn, yourRole):
         futureRisk = 0
         atMostThreeRisk = 0
         atMostFourRisk = 0
-        # countFourBlockAway = 0
         for sheep in sheepPos:            
             if sheep[0] == wolf[0]:
                 if sheep[1]-wolf[1] == -1 or sheep[1]-wolf[1] == 1:
@@ -328,7 +327,10 @@ def evaluationFunction(matrix, turn, yourRole):
         score -= countSheepNearby * 20
         #print(countCanEat * 10 * (10/NumberOfSheep))
         if countCanEat > 1:
-            score += countCanEat * 10 * (11/NumberOfSheep+1)
+            if NumberOfSheep == 3:
+                score += 280
+            else:
+                score += countCanEat * 15 * (11/NumberOfSheep+1) # set to 11 to avoid 10/0
         if countThreeBlockAway > 0:
             score += 15 - futureRisk * 7.5
         if atMostThreeRisk == 3:
@@ -338,14 +340,14 @@ def evaluationFunction(matrix, turn, yourRole):
         if atMostFourRisk == 4:
             score -= 70
         else:
-            score -= atMostThreeRisk * 7.5
-    if turn == 'Sheep':
+            score -= atMostFourRisk * 7.5
+    if turn == 'Sheep': #maximize sheep score
         print("e1")
         score *= -1
-    if yourRole != turn:
+    if yourRole != turn: #maximize score
         print("e2")
         score *= -1
-    print("the score of",turn,"is: ",score)
+    print("the score of",yourRole,"is: ",score)
     return score
     
 
@@ -353,10 +355,10 @@ def evaluationFunction(matrix, turn, yourRole):
     
     
 
-def minimax(state, depth, score, alpha, beta, yourRole, turn):
+def minimax(state, score, alpha, beta, yourRole, turn):
     #print("minimax algorithm")
-    if depth == 0 or checkWinning(state) != 0:
-        return evaluationFunction(state, turn, yourRole)
+    if checkWinning(state) != 0:
+        return score
     
     role = 0
     if turn == 'Wolf':
@@ -382,7 +384,7 @@ def minimax(state, depth, score, alpha, beta, yourRole, turn):
         else:
             nextTurn = 'Wolf'
         print("next turn is",nextTurn)
-        currentScore = minimax(simulationState, depth-1, evaluatedScoreUntilThisBoard, alpha, beta, yourRole, nextTurn)
+        currentScore = minimax(simulationState, evaluatedScoreUntilThisBoard, alpha, beta, yourRole, nextTurn)
         
         
         if yourRole == turn:
@@ -399,7 +401,7 @@ def minimax(state, depth, score, alpha, beta, yourRole, turn):
 
             
     
-#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, WHAT CAN I CHANGE? JUST THE EVALUATION FUNCTION IS DIFFERENT
+#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, JUST THE EVALUATION FUNCTION IS DIFFERENT
 def next_move_wolf(matrix): # minimax for wolf
     availableMove = getAvailableMove(matrix, 'Wolf')
     #print("available move",availableMove)
@@ -419,7 +421,7 @@ def next_move_wolf(matrix): # minimax for wolf
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 2
         EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Wolf', 'Wolf')
-        currentScore = minimax(simulationState, 50, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
+        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
         if currentScore > bestScore:
             bestScore = currentScore
             bestMove = move 
@@ -447,7 +449,7 @@ def next_move_sheep(matrix): # minimax for sheep
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 1
         EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Sheep', 'Sheep')
-        currentScore = minimax(simulationState, math.inf, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
+        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
         if currentScore > bestScore:
             bestScore = currentScore
             bestMove = move 
