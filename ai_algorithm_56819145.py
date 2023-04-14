@@ -6,7 +6,6 @@ import copy
 
 #my direction of the algorithm: alpha-beta pruning minimax algorithm
 
-
 def load_matrix(matrix_file_name): # read and load the current state
     with open(matrix_file_name, 'r') as f:
         data = f.read()
@@ -31,6 +30,7 @@ def write_matrix(matrix, matrix_file_name_output): # wirte the new state into ne
 def checkWinning(board):
     # 1: wolf wins, 2: sheep wins, 0: continually gaming
     # check wolves winning
+    #changed char detection to integer detection to avoid bug
     sheep_num = 0
     wolf_neighbour = []
     wolf_win = True
@@ -39,9 +39,9 @@ def checkWinning(board):
     line_range = [0, 1, 2, 3, 4]
     for r in range(len(board)):
         for c in range(len(board[r])):
-            if board[r][c] == '1':
+            if board[r][c] == 1:
                 sheep_num += 1
-            elif board[r][c] == '2':
+            elif board[r][c] == 2:
                 if r - 1 in line_range:
                     wolf_neighbour.append((r-1, c))
                 if r + 1 in line_range:
@@ -53,7 +53,7 @@ def checkWinning(board):
             else:
                 pass
     for item in wolf_neighbour:
-        if board[item[0]][item[1]] == '0':
+        if board[item[0]][item[1]] == 0:
             sheep_win = not sheep_win
             break
     if sheep_num > 2:
@@ -63,13 +63,11 @@ def checkWinning(board):
         winner = 1
     if sheep_win:
         winner = 2
-
     return winner
 
 def getAvailableMove(matrix,turn):
-    print("available Move is...")
     
-    #COPY FROM ORIGINAL next_move_wolf PROVIDED BY YOU
+    #COPY FROM ORIGINAL next_move_wolf/sheep PROVIDED BY YOU
     candidates=[]
     role = 0
     if turn == 'Wolf':
@@ -123,7 +121,7 @@ def getAvailableMove(matrix,turn):
                             candidates.append([i,j,i,j-1])
     return candidates
 
-# core of minimax algorithm, if yourRole != turn -> score should negative 
+# core of minimax algorithm, if yourRole != turn -> score should be inverted by *-1 
 def evaluationFunction(matrix, turn, yourRole):
         
     wolfPos = []
@@ -134,39 +132,34 @@ def evaluationFunction(matrix, turn, yourRole):
                 wolfPos.append([i,j])
             if matrix[i][j]==1:
                 sheepPos.append([i,j])   
-                
-    #print("their positions",wolfPos,sheepPos)             
-        # evaluate idea: version 1.0
-        # have a counter check how many sheep is near wolf
+        # idea:
+        # have a counter check different sheep position to wolf
         # if countSheepNearby == 4 -> -score
         # if wolf can eat a sheep -> +score (premise that sheep 'can' eat that sheep, not blocked by the sheep near)
-        # if sheep count == 3 and wolf can eat sheep -> score = +80 -> no neccessary the best(so not inf) cuz maybe the alternative decision while chossing the decision is bad
+        # if sheep count == 3 and wolf can eat sheep -> score+++ -> no neccessary the best(so not inf) cuz maybe the alternative decision while chossing the decision is bad
         # for horizontal or vertical:
         # 3 block from wolf -> +score if that sheep has no ally nearby, -score for 1 sheep nearby
         # 4 block from wolf -> no need to care
         # for diagonal:
-        # 1 block from wolf -> -5 score
-        # 2 block from wolf(rectangle area) -> +5 score
-        
-        #next version idea -> add weight -> when more sheep -> less weight
-        
-    #print("evaluation")
-    NumberOfSheep = len(sheepPos)
-    score = 0
+        # 1 block from wolf -> - score according to how dangerous it is
+ 
+                
+    NumberOfSheep = len(sheepPos) #get the number of sheep on the board
+    score = 0 #score to be returned
     
     for wolf in wolfPos:
-        countSheepNearby = 0
-        countCanEat = 0 #can eat >= 2 = + score
+        countSheepNearby = 0 #various counter, check out report for detailed description
+        countCanEat = 0 
         countThreeBlockAway = 0
         futureRisk = 0
         atMostThreeRisk = 0
         atMostFourRisk = 0
         for sheep in sheepPos:            
-            if sheep[0] == wolf[0]:
-                if sheep[1]-wolf[1] == -1 or sheep[1]-wolf[1] == 1:
+            if sheep[0] == wolf[0]: #horizontal
+                if sheep[1]-wolf[1] == -1 or sheep[1]-wolf[1] == 1:#nearby
                     countSheepNearby += 1
                 
-                elif sheep[1]-wolf[1] == -2 or sheep[1]-wolf[1] == 2:
+                elif sheep[1]-wolf[1] == -2 or sheep[1]-wolf[1] == 2:#2 block away
                     if wolf[1] == 0:
                         if matrix[wolf[0]][1] == 0:
                             countCanEat += 1
@@ -176,7 +169,7 @@ def evaluationFunction(matrix, turn, yourRole):
                     else:
                         if matrix[wolf[0]][(sheep[1]+wolf[1])//2] == 0:
                             countCanEat += 1
-                elif sheep[1]-wolf[1] == -3 or sheep[1]-wolf[1] == 3: #elif -> means sheep[1]-wolf[1]==-2or2 will not happen
+                elif sheep[1]-wolf[1] == -3 or sheep[1]-wolf[1] == 3: #3 block away
                     countThreeBlockAway += 1
                     #print("3 blocks away")
                     ifSheepMove = None
@@ -197,12 +190,9 @@ def evaluationFunction(matrix, turn, yourRole):
                             futureRisk += 1
                         if matrix[sheep[0]-1][ifSheepMove] == 1:
                             futureRisk += 1
-                        if matrix[sheep[0]][ifSheepMove-1] == 1:
-                            futureRisk += 1
+                        
                     #print("3 blocks away")
-                #print("vertical")
-            elif sheep[1] == wolf[1]:
-                #print("horizontal")
+            elif sheep[1] == wolf[1]: #vertical 
                 if sheep[0]-wolf[0] == -1 or sheep[0]-wolf[0] == 1:
                     countSheepNearby += 1                
                 elif sheep[0]-wolf[0] == -2 or sheep[0]-wolf[0] == 2:
@@ -215,7 +205,7 @@ def evaluationFunction(matrix, turn, yourRole):
                     else:
                         if matrix[(sheep[0]+wolf[0])//2][wolf[1]] == 0:
                             countCanEat += 1
-                elif sheep[0]-wolf[0] == -3 or sheep[0]-wolf[0] == 3: #elif -> means sheep[1]-wolf[1]==-2or2 will not happen
+                elif sheep[0]-wolf[0] == -3 or sheep[0]-wolf[0] == 3: 
                     #print("3 blocks away")
                     ifSheepMove = None
                     if sheep[0] > wolf[0]:
@@ -235,12 +225,11 @@ def evaluationFunction(matrix, turn, yourRole):
                             futureRisk += 1
                         if matrix[ifSheepMove][sheep[1]-1] == 1:
                             futureRisk += 1
-                        if matrix[ifSheepMove-1][sheep[1]] == 1:
-                            futureRisk += 1                    
+                                     
 #                    print("3 blocks away")
-            else:
+            else: #diagonal
                 if wolf[0] == 0 and wolf[1] == 0:
-                    if sheep[0] == 1 and sheep[1] == 1:
+                    if sheep[0] == 1 and sheep[1] == 1: 
                         if matrix[0][1] == 1 and matrix[1][0] == 1:
                             score -= 70 #no escape
                         elif matrix[0][1] == 1 or matrix[1][0] == 1:
@@ -322,15 +311,13 @@ def evaluationFunction(matrix, turn, yourRole):
                         if matrix[wolf[0]][wolf[1]-1] == 1:
                             atMostFourRisk += 1 
                     #print("center")
-                #print("check diagonal")
-    
+        #score calculation session
         score -= countSheepNearby * 20
-        #print(countCanEat * 10 * (10/NumberOfSheep))
         if countCanEat > 1:
             if NumberOfSheep == 3:
                 score += 280
             else:
-                score += countCanEat * 15 * (11/NumberOfSheep+1) # set to 11 to avoid 10/0
+                score += countCanEat * 15 * (16/NumberOfSheep+1) # set to 11 to avoid 10/0
         if countThreeBlockAway > 0:
             score += 15 - futureRisk * 7.5
         if atMostThreeRisk == 3:
@@ -341,23 +328,22 @@ def evaluationFunction(matrix, turn, yourRole):
             score -= 70
         else:
             score -= atMostFourRisk * 7.5
+        #score calculation ends
+        
+    #score convertion
     if turn == 'Sheep': #maximize sheep score
-        print("e1")
         score *= -1
     if yourRole != turn: #maximize score
-        print("e2")
         score *= -1
-    print("the score of",yourRole,"is: ",score)
+    #score convertion ends
+    
     return score
-    
+        
 
-    
-    
-    
-
-def minimax(state, score, alpha, beta, yourRole, turn):
-    #print("minimax algorithm")
-    if checkWinning(state) != 0:
+def minimax(state, score, depth, alpha, beta, yourRole, turn):
+    if depth == 0 or checkWinning(state) != 0:  #game over
+        if depth == 0:
+            return score + evaluationFunction(state,turn,yourRole)
         return score
     
     role = 0
@@ -383,16 +369,15 @@ def minimax(state, score, alpha, beta, yourRole, turn):
             nextTurn = 'Sheep'
         else:
             nextTurn = 'Wolf'
-        print("next turn is",nextTurn)
-        currentScore = minimax(simulationState, evaluatedScoreUntilThisBoard, alpha, beta, yourRole, nextTurn)
+        currentScore = minimax(simulationState, evaluatedScoreUntilThisBoard, depth-1,alpha, beta, yourRole, nextTurn)
         
         
-        if yourRole == turn:
+        if yourRole == turn: #player = current turn -> max
             bestScore = max(bestScore, currentScore)           
             alpha = max(alpha,bestScore)
-            if alpha >= beta:
+            if alpha >= beta: #pruning
                 break
-        else:
+        else: #player != current turn -> min
             bestScore = min(bestScore, currentScore)           
             beta = min(bestScore,currentScore)
             if alpha >= beta:
@@ -402,16 +387,15 @@ def minimax(state, score, alpha, beta, yourRole, turn):
             
     
 #THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE, IT IS JUST A MINIMAX, JUST THE EVALUATION FUNCTION IS DIFFERENT
-def next_move_wolf(matrix): # minimax for wolf
+def next_move_wolf(matrix): # move for wolf
     availableMove = getAvailableMove(matrix, 'Wolf')
-    #print("available move",availableMove)
 
     bestMove = None
     bestScore = -math.inf
     
     alpha = -math.inf
     beta = math.inf
-    
+
     for move in availableMove:
         simulationState = copy.deepcopy(matrix)
         beforeMoveX = move[0]
@@ -421,100 +405,45 @@ def next_move_wolf(matrix): # minimax for wolf
         simulationState[beforeMoveX,beforeMoveY] = 0
         simulationState[afterMoveX,afterMovey] = 2
         EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Wolf', 'Wolf')
-        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard, alpha, beta, 'Wolf', 'Sheep')
-        if currentScore > bestScore:
+        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard, 10, alpha, beta, 'Wolf', 'Sheep')
+        if currentScore >= bestScore:
             bestScore = currentScore
             bestMove = move 
         alpha = max(alpha, bestScore)
-    print("bestMove:",bestMove)
+
     return bestMove    
     
     
 
-def next_move_sheep(matrix): # minimax for sheep
+def next_move_sheep(matrix): # move for sheep
     availableMove = getAvailableMove(matrix, 'Sheep')
-    #print("available move",availableMove)
     bestMove = None
-    bestScore = -math.inf
+    bestScore = -math.inf #initializing bestScore
     
-    alpha = -math.inf
+    alpha = -math.inf #initializing alpha and beta
     beta = math.inf
     
     for move in availableMove:
-        simulationState = copy.deepcopy(matrix)
+        simulationState = copy.deepcopy(matrix) #copy the board
         beforeMoveX = move[0]
-        beforeMoveY = move[1]
+        beforeMoveY = move[1] 
         afterMoveX = move[2]
-        afterMovey = move[3]
+        afterMovey = move[3] #available move
         simulationState[beforeMoveX,beforeMoveY] = 0
-        simulationState[afterMoveX,afterMovey] = 1
-        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Sheep', 'Sheep')
-        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard, alpha, beta,'Sheep', 'Wolf')
-        if currentScore > bestScore:
+        simulationState[afterMoveX,afterMovey] = 1 #make the move
+        EvaluatedScoreForThisBoard = evaluationFunction(simulationState, 'Sheep', 'Sheep') #evaluate the board
+        currentScore = minimax(simulationState, EvaluatedScoreForThisBoard,0, alpha, beta,'Sheep', 'Wolf') #minimax
+        if currentScore > bestScore: #update the score if it is better
             bestScore = currentScore
-            bestMove = move 
-        alpha = max(alpha, bestScore)
-    print("bestMove:",bestMove)
-    return bestMove  
-    
-def random_move_wolf(matrix): # random walk for wolf
-    candidates=[]
-    for i in range(5):
-        for j in range(5):
-            if matrix[i,j]==2:
-                if i+1<5:
-                    if matrix[i+1,j]==0:
-                        candidates.append([i,j,i+1,j])
-                if i-1>=0:
-                    if matrix[i-1,j]==0:
-                        candidates.append([i,j,i-1,j])
-                if j+1<5:
-                    if matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+1])
-                if j-1>=0:
-                    if matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-1])
-                if i+2<5:
-                    if matrix[i+2,j]==1 and matrix[i+1,j]==0:
-                        candidates.append([i,j,i+2,j])
-                if i-2>=0:
-                    if matrix[i-2,j]==1 and matrix[i-1,j]==0:
-                        candidates.append([i,j,i-2,j])
-                if j+2<5:
-                    if matrix[i,j+2]==1 and matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+2])
-                if j-2>=0:
-                    if matrix[i,j-2]==1 and matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-2])
-    move_idx=np.random.randint(0, len(candidates))
-    return candidates[move_idx]
+            bestMove = move #better move
+        alpha = max(alpha, bestScore) #update alpha
+    return bestMove 
 
-def random_move_sheep(matrix): # random walk for sheep
-    candidates=[]
-    for i in range(5):
-        for j in range(5):
-            if matrix[i,j]==1:
-                if i+1<5:
-                    if matrix[i+1,j]==0:
-                        candidates.append([i,j,i+1,j])
-                if i-1>=0:
-                    if matrix[i-1,j]==0:
-                        candidates.append([i,j,i-1,j])
-                if j+1<5:
-                    if matrix[i,j+1]==0:
-                        candidates.append([i,j,i,j+1])
-                if j-1>=0:
-                    if matrix[i,j-1]==0:
-                        candidates.append([i,j,i,j-1])
-    move_idx=np.random.randint(0, len(candidates))
-    return candidates[move_idx]
+
 #!!!DISCLAIMER!!!
 ################################################################
 #I DID ALL THE THING BY MYSELF
-#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE
-#PLEASE DO NOT ACCUSE ME OF PLAGARISM CUZ OF COPYING WORK BY MYSELF
-#IT IS CALL REUSE ENGINEERING(WORK SMART NOT HARD) AND NOT FULLY COPYING(JUST LIKE REFERING TO PSEUDO CODE)
-#IF THIS CALL PLAGARISM, THEN EVERYTIME I WRITE HELLO WORLD PROGRAM I PLAGARISE ONCE CUZ I MOST LIKELY A LOT OF HELLO WORLD CODE IN THE INTERNET 
+#THE WAY OF WRITING THE MINIMAX ALGO IS SIMILAR TO ASM 1 OF MINE (NOT COPYING)
 ################################################################
 #!!!DISCLAIMER!!!
 
@@ -523,14 +452,9 @@ def AIAlgorithm(filename, movemade): # a showcase for random walk
     iter_num=iter_num.split('.')[0]
     iter_num=int(iter_num.split('_')[1])
     matrix=load_matrix(filename)
-    role = ""
-    if movemade is True:
-        role = "wolf"
-    else:
-        role = "sheep"
-    #print(role,"'s turn, current board: \n",matrix)
+    
     if movemade==True:
-        [start_row, start_col, end_row, end_col]=random_move_wolf(matrix)
+        [start_row, start_col, end_row, end_col]=next_move_wolf(matrix)
         matrix2=copy.deepcopy(matrix)
         matrix2[end_row, end_col]=2
         matrix2[start_row, start_col]=0
@@ -545,4 +469,3 @@ def AIAlgorithm(filename, movemade): # a showcase for random walk
     write_matrix(matrix2, matrix_file_name_output)
 
     return start_row, start_col, end_row, end_col
-
